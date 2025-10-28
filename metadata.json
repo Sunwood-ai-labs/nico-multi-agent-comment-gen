@@ -1,0 +1,5 @@
+{
+  "name": "NicoNico Multi-Agent Comment Generator",
+  "description": "An application where three distinct AI agents watch a video, generate Niconico-style comments based on their personas, and merge them into a final timeline. Users can upload a video and an optional article for context.",
+  "requestFramePermissions": []
+}
