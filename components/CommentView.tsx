@@ -1,8 +1,6 @@
-
 import React, { useState } from 'react';
 import type { Comment } from '../types';
 import { AGENTS } from '../constants';
-import { ClipboardCopy } from './icons';
 
 interface CommentViewProps {
   comments: Comment[];
@@ -28,21 +26,21 @@ const CommentView: React.FC<CommentViewProps> = ({ comments }) => {
       <div className="flex justify-end mb-4">
         <button 
           onClick={handleCopy}
-          className="flex items-center gap-2 bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+          className="flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium"
         >
-          <ClipboardCopy className="w-5 h-5" />
+          <i className="fa-regular fa-copy w-4 h-4"></i>
           {copyStatus}
         </button>
       </div>
-      <div className="bg-gray-900/50 rounded-lg p-4 max-h-[500px] overflow-y-auto font-mono text-sm border border-gray-700">
+      <div className="bg-slate-100 rounded-lg p-4 max-h-[500px] overflow-y-auto font-mono text-sm border border-slate-200">
         <div className="grid grid-cols-[auto_auto_1fr] gap-x-4 items-start">
           {comments.map((comment, index) => {
             const agent = comment.agentId ? AGENTS[comment.agentId] : null;
             return (
               <React.Fragment key={index}>
-                <span className="text-gray-500 text-right">{comment.time}</span>
-                <span className={`font-bold text-${agent?.color || 'gray-400'}`}>{agent?.icon || '⁇'}</span>
-                <span className="text-gray-200 break-words">{comment.comment}</span>
+                <span className="text-slate-500 text-right">{comment.time}</span>
+                <span className={`font-bold text-${agent?.color || 'slate-400'}`}>{agent?.icon || '⁇'}</span>
+                <span className="text-slate-800 break-words">{comment.comment}</span>
               </React.Fragment>
             );
           })}

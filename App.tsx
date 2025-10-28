@@ -5,7 +5,6 @@ import type { AgentName, AgentStatus, Comment, Agent } from './types';
 import AgentEditorList from './components/AgentCard';
 import CommentView from './components/CommentView';
 import FileUploader from './components/FileUploader';
-import { BotMessageSquare } from './components/icons';
 
 const App: React.FC = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -87,24 +86,24 @@ const App: React.FC = () => {
   }, [videoFile, articleText, agents, executionOrder]);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       <div className="container mx-auto p-4 md:p-8">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-500">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 kaisei-decol-bold">
             NicoNico Multi-Agent Comment Generator
           </h1>
-          <p className="mt-2 text-gray-400">
-            AI agents collaborate to create Niconico-style video comments.
+          <p className="mt-3 text-slate-600 max-w-2xl mx-auto">
+            AI agents collaborate to create Niconico-style video comments. Define agent personas, adjust their processing order, and generate a unified comment timeline.
           </p>
         </header>
 
         <main className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
-            <h2 className="text-2xl font-semibold mb-4 border-b border-gray-600 pb-2">1. Upload Media</h2>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 className="text-2xl font-semibold mb-4 border-b border-slate-200 pb-3 kaisei-decol-bold tracking-wide">1. Upload Media</h2>
             <div className="space-y-6">
               <FileUploader onFileChange={handleFileChange} />
               <div>
-                <label htmlFor="article" className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="article" className="block text-sm font-medium text-slate-700 mb-2">
                   Optional: Paste an article for context
                 </label>
                 <textarea
@@ -112,15 +111,15 @@ const App: React.FC = () => {
                   rows={6}
                   value={articleText}
                   onChange={(e) => setArticleText(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-slate-800 focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition placeholder:text-slate-400"
                   placeholder="Paste article content here..."
                 ></textarea>
               </div>
             </div>
           </div>
           
-          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
-            <h2 className="text-2xl font-semibold mb-4 border-b border-gray-600 pb-2">2. Configure Agents & Order</h2>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 className="text-2xl font-semibold mb-4 border-b border-slate-200 pb-3 kaisei-decol-bold tracking-wide">2. Configure Agents & Order</h2>
             <AgentEditorList
               agents={agents}
               setAgents={setAgents}
@@ -132,24 +131,24 @@ const App: React.FC = () => {
               <button
                 onClick={handleGenerate}
                 disabled={isLoading || !videoFile}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                className="w-full flex items-center justify-center gap-3 bg-slate-900 text-slate-50 font-semibold py-3 px-4 rounded-lg hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors duration-300 text-lg"
               >
-                <BotMessageSquare className="w-6 h-6" />
+                <i className="fa-solid fa-robot"></i>
                 {isLoading ? 'Agents are thinking...' : 'Generate Comments'}
               </button>
-              {error && <p className="text-red-400 mt-4 text-center">{error}</p>}
+              {error && <p className="text-red-500 mt-4 text-center font-medium">{error}</p>}
             </div>
           </div>
         </main>
         
         {mergedComments && mergedComments.length > 0 && (
-          <section className="mt-8 bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
-             <h2 className="text-2xl font-semibold mb-4 border-b border-gray-600 pb-2">3. Merged Comment Timeline</h2>
+          <section className="mt-8 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+             <h2 className="text-2xl font-semibold mb-4 border-b border-slate-200 pb-3 kaisei-decol-bold tracking-wide">3. Merged Comment Timeline</h2>
              <CommentView comments={mergedComments} />
           </section>
         )}
       </div>
-       <footer className="text-center p-4 text-gray-500 text-sm">
+       <footer className="text-center p-4 text-slate-500 text-sm">
         Built by a world-class senior frontend React engineer with expertise in Gemini API.
       </footer>
     </div>

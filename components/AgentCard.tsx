@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import type { Agent, AgentName, AgentStatus } from '../types';
-import { CheckCircle, XCircle, Loader, GripVertical, ChevronDown } from './icons';
 
 interface AgentEditorListProps {
   agents: Record<AgentName, Agent>;
@@ -42,9 +41,9 @@ const AgentEditorList: React.FC<AgentEditorListProps> = ({ agents, setAgents, ex
 
   const statusIndicator = (status: AgentStatus) => {
     switch (status.status) {
-      case 'loading': return <Loader className="animate-spin text-gray-400" />;
-      case 'success': return <CheckCircle className="text-green-400" />;
-      case 'error': return <XCircle className="text-red-400" />;
+      case 'loading': return <i className="fa-solid fa-spinner fa-spin text-slate-500"></i>;
+      case 'success': return <i className="fa-solid fa-check-circle text-green-500"></i>;
+      case 'error': return <i className="fa-solid fa-times-circle text-red-500"></i>;
       default: return null;
     }
   };
@@ -64,36 +63,36 @@ const AgentEditorList: React.FC<AgentEditorListProps> = ({ agents, setAgents, ex
             onDragEnter={() => handleDragEnter(index)}
             onDragEnd={handleDrop}
             onDragOver={(e) => e.preventDefault()}
-            className="bg-gray-700 rounded-lg transition-shadow duration-300 shadow-md hover:shadow-lg"
+            className="bg-white border border-slate-200 rounded-lg transition-shadow duration-300 shadow-sm hover:shadow-md"
           >
             <div className="flex items-center p-3 cursor-grab">
-              <GripVertical className="w-5 h-5 text-gray-500 mr-3" />
+              <i className="fa-solid fa-grip-vertical w-5 h-5 text-slate-400 mr-3"></i>
               <div className="text-2xl mr-3">{agent.icon}</div>
               <div className="flex-grow">
-                <h3 className={`font-semibold text-gray-100`}>{agent.name}</h3>
-                <p className="text-xs text-gray-400">{agent.description}</p>
+                <h3 className={`font-semibold text-slate-800`}>{agent.name}</h3>
+                <p className="text-xs text-slate-500">{agent.description}</p>
               </div>
               <div className="h-6 w-6 flex items-center justify-center mr-2">
                 {statusIndicator(status)}
               </div>
               <button
                 onClick={() => setEditingAgentId(isEditing ? null : agentId)}
-                className="p-1 rounded-full hover:bg-gray-600"
+                className="p-2 rounded-full hover:bg-slate-100"
                 aria-label={isEditing ? 'Close prompt editor' : 'Open prompt editor'}
               >
-                <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isEditing ? 'rotate-180' : ''}`} />
+                <i className={`fa-solid fa-chevron-down text-slate-500 transition-transform duration-300 ${isEditing ? 'rotate-180' : ''}`} />
               </button>
             </div>
             {isEditing && (
-              <div className="p-3 border-t border-gray-600">
-                <label htmlFor={`prompt-${agentId}`} className="block text-sm font-medium text-gray-300 mb-2">
+              <div className="p-4 border-t border-slate-200">
+                <label htmlFor={`prompt-${agentId}`} className="block text-sm font-medium text-slate-700 mb-2">
                   Edit Prompt for {agent.name}
                 </label>
                 <textarea
                   id={`prompt-${agentId}`}
                   value={agent.prompt}
                   onChange={(e) => handlePromptChange(agentId, e.target.value)}
-                  className="w-full h-48 bg-gray-900 border border-gray-500 rounded-md p-2 text-sm text-gray-200 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition font-mono"
+                  className="w-full h-48 bg-slate-50 border border-slate-300 rounded-md p-2 text-sm text-slate-800 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition font-mono"
                 />
               </div>
             )}

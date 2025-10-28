@@ -1,6 +1,4 @@
-
 import React, { useState, useCallback } from 'react';
-import { UploadCloud, Video, X } from './icons';
 
 interface FileUploaderProps {
   onFileChange: (file: File | null) => void;
@@ -49,13 +47,13 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileChange }) => {
 
   if (file) {
     return (
-      <div className="bg-gray-700 border-2 border-dashed border-gray-600 rounded-lg p-4 flex items-center justify-between">
+      <div className="bg-slate-100 border border-slate-300 rounded-lg p-4 flex items-center justify-between">
         <div className="flex items-center gap-3 overflow-hidden">
-          <Video className="w-8 h-8 text-indigo-400 flex-shrink-0" />
-          <span className="text-gray-200 truncate">{file.name}</span>
+          <i className="fa-solid fa-film text-indigo-500 text-xl w-8 text-center"></i>
+          <span className="text-slate-800 truncate font-medium">{file.name}</span>
         </div>
-        <button onClick={handleRemoveFile} className="text-gray-400 hover:text-white transition">
-          <X className="w-6 h-6" />
+        <button onClick={handleRemoveFile} className="text-slate-500 hover:text-slate-800 transition">
+          <i className="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
     );
@@ -69,12 +67,12 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileChange }) => {
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className={`flex flex-col items-center justify-center w-full h-32 px-4 transition bg-gray-700 border-2 border-dashed rounded-lg cursor-pointer hover:border-indigo-400
-          ${isDragging ? 'border-indigo-400' : 'border-gray-600'}`}
+        className={`flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-dashed rounded-lg cursor-pointer hover:border-slate-400
+          ${isDragging ? 'border-slate-400 bg-slate-50' : 'border-slate-300'}`}
       >
         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-          <UploadCloud className="w-10 h-10 mb-3 text-gray-400" />
-          <p className="mb-2 text-sm text-gray-400">
+          <i className="fa-solid fa-cloud-arrow-up text-3xl mb-3 text-slate-400"></i>
+          <p className="mb-2 text-sm text-slate-500">
             <span className="font-semibold">Click to upload</span> or drag and drop a video
           </p>
         </div>
