@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { Agent, Comment } from "../types";
+import type { Agent, Comment, GeminiModel } from "../types";
 
 const API_KEY = process.env.API_KEY;
 
@@ -31,7 +31,14 @@ const responseSchema = {
   },
 };
 
-export async function generateCommentsForAgent(agent: Agent, videoFileName: string, articleText: string, previousComments: Comment[]): Promise<Comment[]> {
+export async function generateCommentsForAgent(
+  agent: Agent, 
+  videoFileName: string, 
+  articleText: string, 
+  previousComments: Comment[],
+  modelName: GeminiModel,
+  onRetry: (attempt: number, maxRetries: number) => void
+): Promise<Comment[]> {
   const previousCommentsContext = previousComments.length > 0
     ? `
 ## 💬 先行エージェントのコメント
@@ -54,23 +61,48 @@ ${articleText ? `参考資料として以下の記事も読みました。\n\n--
 あなたの役割（${agent.name}）に従って、この動画に対するNiconico風のコメントを約${agent.targetCommentCount}個生成してください。
 出力は必ず指定されたJSON形式の配列にしてください。タイムスタンプは動画のどこかの時点を想定して創造的に設定してください。
 `;
+  
+  const maxRetries = 3;
+  const retryDelay = 60000; // 1 minute
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: fullPrompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-        temperature: 0.8,
-      },
-    });
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: fullPrompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+          temperature: 0.8,
+        },
+      });
 
-    const jsonText = response.text.trim();
-    const comments: Comment[] = JSON.parse(jsonText);
-    return comments;
-  } catch (error) {
-    console.error(`Error generating comments for ${agent.name}:`, error);
-    throw new Error(`Failed to get a valid response from the ${agent.name}.`);
+      const jsonText = response.text.trim();
+      const parsedData: any[] = JSON.parse(jsonText);
+
+      const comments: Comment[] = parsedData.map(item => ({
+        time: item.time,
+        comment: item.comment,
+        command: item.command || '',
+      }));
+
+      return comments; // Success
+    } catch (error) {
+      console.error(`Attempt ${attempt + 1}/${maxRetries} for ${agent.name} failed:`, error);
+      const errorMessage = (error as Error).toString().toLowerCase();
+
+      if (errorMessage.includes("429") || errorMessage.includes("rate limit")) {
+        if (attempt === maxRetries - 1) {
+          throw new Error(`Rate limit exceeded and max retries reached for ${agent.name}.`);
+        }
+        onRetry(attempt + 1, maxRetries);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      } else {
+        throw error; // Non-retriable error
+      }
+    }
   }
+
+  // This should not be reached, but is a fallback.
+  throw new Error(`Failed to generate comments for ${agent.name} after ${maxRetries} attempts.`);
 }

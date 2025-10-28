@@ -1,18 +1,19 @@
+
 import React, { useState, useRef } from 'react';
-import type { Agent, AgentName, AgentStatus } from '../types';
+import type { Agent, AgentId, AgentStatus } from '../types';
 
 interface AgentEditorListProps {
-  agents: Record<AgentName, Agent>;
-  setAgents: React.Dispatch<React.SetStateAction<Record<AgentName, Agent>>>;
-  executionOrder: AgentName[];
-  setExecutionOrder: React.Dispatch<React.SetStateAction<AgentName[]>>;
-  statuses: Record<AgentName, AgentStatus>;
-  commentCounts: Record<AgentName, number>;
-  handleCommentCountChange: (agentId: AgentName, count: number) => void;
+  agents: Record<AgentId, Agent>;
+  setAgents: React.Dispatch<React.SetStateAction<Record<AgentId, Agent>>>;
+  executionOrder: AgentId[];
+  setExecutionOrder: React.Dispatch<React.SetStateAction<AgentId[]>>;
+  statuses: Record<AgentId, AgentStatus>;
+  commentCounts: Record<AgentId, number>;
+  handleCommentCountChange: (agentId: AgentId, count: number) => void;
 }
 
 const AgentEditorList: React.FC<AgentEditorListProps> = ({ agents, setAgents, executionOrder, setExecutionOrder, statuses, commentCounts, handleCommentCountChange }) => {
-  const [editingAgentId, setEditingAgentId] = useState<AgentName | null>(null);
+  const [editingAgentId, setEditingAgentId] = useState<AgentId | null>(null);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
 
@@ -34,7 +35,7 @@ const AgentEditorList: React.FC<AgentEditorListProps> = ({ agents, setAgents, ex
     dragOverItem.current = null;
   };
   
-  const handlePromptChange = (agentId: AgentName, newPrompt: string) => {
+  const handlePromptChange = (agentId: AgentId, newPrompt: string) => {
     setAgents(prev => ({
       ...prev,
       [agentId]: { ...prev[agentId], prompt: newPrompt }

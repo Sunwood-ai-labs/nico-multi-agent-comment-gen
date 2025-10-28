@@ -10,7 +10,10 @@ const CommentView: React.FC<CommentViewProps> = ({ comments }) => {
   const [copyStatus, setCopyStatus] = useState('Copy JSON');
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(JSON.stringify(comments, null, 2))
+    // Create a new array of comments without the 'agentId' property for copying.
+    const commentsToCopy = comments.map(({ agentId, ...rest }) => rest);
+
+    navigator.clipboard.writeText(JSON.stringify(commentsToCopy, null, 2))
       .then(() => {
         setCopyStatus('Copied!');
         setTimeout(() => setCopyStatus('Copy JSON'), 2000);

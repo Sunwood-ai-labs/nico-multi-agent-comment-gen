@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { AGENTS as INITIAL_AGENTS } from './constants';
 import { generateCommentsForAgent } from './services/geminiService';
-import type { AgentName, AgentStatus, Comment, Agent } from './types';
+import type { AgentId, AgentStatus, Comment, Agent, GeminiModel } from './types';
 import AgentEditorList from './components/AgentCard';
 import CommentView from './components/CommentView';
 import FileUploader from './components/FileUploader';
@@ -9,21 +9,29 @@ import FileUploader from './components/FileUploader';
 const App: React.FC = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [articleText, setArticleText] = useState<string>('');
-  const [agents, setAgents] = useState<Record<AgentName, Agent>>(INITIAL_AGENTS);
-  const [executionOrder, setExecutionOrder] = useState<AgentName[]>(
-    Object.keys(INITIAL_AGENTS) as AgentName[]
-  );
-  const [agentStatuses, setAgentStatuses] = useState<Record<AgentName, AgentStatus>>(
-    () => Object.keys(INITIAL_AGENTS).reduce((acc, key) => {
-      acc[key as AgentName] = { status: 'idle' };
+  const [agents, setAgents] = useState<Record<AgentId, Agent>>(() => 
+    Object.values(INITIAL_AGENTS).reduce((acc, agent) => {
+      acc[agent.id] = { ...agent, prompt: '' }; // Initialize with empty prompts
       return acc;
-    }, {} as Record<AgentName, AgentStatus>)
+    }, {} as Record<AgentId, Agent>)
   );
-  const [commentCounts, setCommentCounts] = useState<Record<AgentName, number>>(
+  const [promptsLoaded, setPromptsLoaded] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
+
+  const [executionOrder, setExecutionOrder] = useState<AgentId[]>(
+    Object.keys(INITIAL_AGENTS) as AgentId[]
+  );
+  const [agentStatuses, setAgentStatuses] = useState<Record<AgentId, AgentStatus>>(
     () => Object.keys(INITIAL_AGENTS).reduce((acc, key) => {
-      acc[key as AgentName] = 0;
+      acc[key as AgentId] = { status: 'idle' };
       return acc;
-    }, {} as Record<AgentName, number>)
+    }, {} as Record<AgentId, AgentStatus>)
+  );
+  const [commentCounts, setCommentCounts] = useState<Record<AgentId, number>>(
+    () => Object.keys(INITIAL_AGENTS).reduce((acc, key) => {
+      acc[key as AgentId] = 0;
+      return acc;
+    }, {} as Record<AgentId, number>)
   );
   const [mergedComments, setMergedComments] = useState<Comment[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -31,13 +39,45 @@ const App: React.FC = () => {
   const [progressMessage, setProgressMessage] = useState<string>('');
   const [progressPercent, setProgressPercent] = useState<number>(0);
 
+  useEffect(() => {
+    const loadPrompts = async () => {
+      try {
+        const agentIds = Object.keys(INITIAL_AGENTS) as AgentId[];
+        const promptPromises = agentIds.map(id => 
+          fetch(`/prompts/${id}.md`).then(res => {
+            if (!res.ok) {
+              throw new Error(`Failed to fetch prompt for ${id}`);
+            }
+            return res.text();
+          })
+        );
+        const promptContents = await Promise.all(promptPromises);
+        
+        const updatedAgents = { ...agents };
+        agentIds.forEach((id, index) => {
+          updatedAgents[id].prompt = promptContents[index];
+        });
+
+        setAgents(updatedAgents);
+        setPromptsLoaded(true);
+
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        setError(`Failed to load agent prompts. Please refresh the page. Details: ${errorMessage}`);
+        console.error(e);
+      }
+    };
+    loadPrompts();
+  }, []);
+
+
   const handleFileChange = (file: File | null) => {
     setVideoFile(file);
     setMergedComments(null);
     setError(null);
   };
   
-  const handleCommentCountChange = (agentId: AgentName, count: number) => {
+  const handleCommentCountChange = (agentId: AgentId, count: number) => {
     setAgents(prev => ({
       ...prev,
       [agentId]: { ...prev[agentId], targetCommentCount: count }
@@ -49,6 +89,10 @@ const App: React.FC = () => {
       setError('Please select a video file first.');
       return;
     }
+    if (!promptsLoaded) {
+      setError('Agent prompts are still loading. Please wait.');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -58,15 +102,15 @@ const App: React.FC = () => {
     
     setAgentStatuses(
       Object.keys(agents).reduce((acc, key) => {
-        acc[key as AgentName] = { status: 'idle' };
+        acc[key as AgentId] = { status: 'idle' };
         return acc;
-      }, {} as Record<AgentName, AgentStatus>)
+      }, {} as Record<AgentId, AgentStatus>)
     );
      setCommentCounts(
       Object.keys(agents).reduce((acc, key) => {
-        acc[key as AgentName] = 0;
+        acc[key as AgentId] = 0;
         return acc;
-      }, {} as Record<AgentName, number>)
+      }, {} as Record<AgentId, number>)
     );
 
     let accumulatedComments: Comment[] = [];
@@ -78,11 +122,17 @@ const App: React.FC = () => {
       setAgentStatuses(prev => ({ ...prev, [agentId]: { status: 'loading' } }));
       
       try {
+        const onRetry = (attempt: number, maxRetries: number) => {
+            setProgressMessage(`[${agentIndex + 1}/${executionOrder.length}] ${agent.name} hit a rate limit. Retrying (attempt ${attempt + 1}/${maxRetries})...`);
+        };
+        
         const newComments = await generateCommentsForAgent(
           agent,
           videoFile.name,
           articleText,
-          accumulatedComments
+          accumulatedComments,
+          selectedModel,
+          onRetry
         );
         
         setCommentCounts(prev => ({ ...prev, [agentId]: newComments.length }));
@@ -120,7 +170,16 @@ const App: React.FC = () => {
         setProgressPercent(0);
     }, 1500);
 
-  }, [videoFile, articleText, agents, executionOrder]);
+  }, [videoFile, articleText, agents, executionOrder, promptsLoaded, selectedModel]);
+
+  if (!promptsLoaded && !error) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+        <i className="fa-solid fa-spinner fa-spin text-4xl text-slate-500"></i>
+        <p className="mt-4 text-slate-600">Loading agent prompts...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -166,10 +225,25 @@ const App: React.FC = () => {
               commentCounts={commentCounts}
               handleCommentCountChange={handleCommentCountChange}
             />
-            <div className="mt-6">
+            <div className="mt-6 space-y-4">
+               <div>
+                <label htmlFor="model-select" className="block text-sm font-medium text-slate-700 mb-2">
+                  AI Model
+                </label>
+                <select
+                  id="model-select"
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value as GeminiModel)}
+                  disabled={isLoading}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-slate-800 focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition disabled:opacity-50"
+                >
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Faster)</option>
+                  <option value="gemini-2.5-pro">Gemini 2.5 Pro (More Capable)</option>
+                </select>
+              </div>
               <button
                 onClick={handleGenerate}
-                disabled={isLoading || !videoFile}
+                disabled={isLoading || !videoFile || !promptsLoaded}
                 className="w-full flex items-center justify-center gap-3 bg-slate-900 text-slate-50 font-semibold py-3 px-4 rounded-lg hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors duration-300 text-lg"
               >
                 <i className={`fa-solid ${isLoading ? 'fa-spinner fa-spin' : 'fa-robot'}`}></i>
