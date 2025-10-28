@@ -1,3 +1,4 @@
+// Fix: Removed self-referencing import that caused declaration conflicts.
 
 export type AgentName = 'gal' | 'professor' | 'comedian';
 
@@ -15,6 +16,7 @@ export interface Agent {
   description: string;
   color: string;
   prompt: string;
+  targetCommentCount: number;
 }
 
 export interface AgentStatus {

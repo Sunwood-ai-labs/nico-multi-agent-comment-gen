@@ -1,4 +1,3 @@
-
 import type { Agent, AgentName } from './types';
 
 const galPrompt = `
@@ -101,6 +100,7 @@ export const AGENTS: Record<AgentName, Agent> = {
     description: 'Intuitive and emotional. Gets to the heart of the matter with style.',
     color: 'pink-400',
     prompt: galPrompt,
+    targetCommentCount: 15,
   },
   professor: {
     id: 'professor',
@@ -109,6 +109,7 @@ export const AGENTS: Record<AgentName, Agent> = {
     description: 'Logical and analytical. Provides context and factual explanations.',
     color: 'blue-400',
     prompt: professorPrompt,
+    targetCommentCount: 15,
   },
   comedian: {
     id: 'comedian',
@@ -117,5 +118,6 @@ export const AGENTS: Record<AgentName, Agent> = {
     description: 'Humorous and witty. Finds the funny moments and makes jokes.',
     color: 'orange-400',
     prompt: comedianPrompt,
+    targetCommentCount: 15,
   },
 };

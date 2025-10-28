@@ -51,7 +51,7 @@ ${previousCommentsContext}
 ## 📝 タスク
 あなたは今から「${videoFileName}」というタイトルの動画を見ています。
 ${articleText ? `参考資料として以下の記事も読みました。\n\n---\n記事内容:\n${articleText}\n---\n\n` : ''}
-あなたの役割（${agent.name}）に従って、この動画に対するNiconico風のコメントを10個から15個生成してください。
+あなたの役割（${agent.name}）に従って、この動画に対するNiconico風のコメントを約${agent.targetCommentCount}個生成してください。
 出力は必ず指定されたJSON形式の配列にしてください。タイムスタンプは動画のどこかの時点を想定して創造的に設定してください。
 `;
 

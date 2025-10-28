@@ -7,9 +7,11 @@ interface AgentEditorListProps {
   executionOrder: AgentName[];
   setExecutionOrder: React.Dispatch<React.SetStateAction<AgentName[]>>;
   statuses: Record<AgentName, AgentStatus>;
+  commentCounts: Record<AgentName, number>;
+  handleCommentCountChange: (agentId: AgentName, count: number) => void;
 }
 
-const AgentEditorList: React.FC<AgentEditorListProps> = ({ agents, setAgents, executionOrder, setExecutionOrder, statuses }) => {
+const AgentEditorList: React.FC<AgentEditorListProps> = ({ agents, setAgents, executionOrder, setExecutionOrder, statuses, commentCounts, handleCommentCountChange }) => {
   const [editingAgentId, setEditingAgentId] = useState<AgentName | null>(null);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -53,6 +55,7 @@ const AgentEditorList: React.FC<AgentEditorListProps> = ({ agents, setAgents, ex
       {executionOrder.map((agentId, index) => {
         const agent = agents[agentId];
         const status = statuses[agentId];
+        const count = commentCounts[agentId];
         const isEditing = editingAgentId === agentId;
 
         return (
@@ -70,7 +73,15 @@ const AgentEditorList: React.FC<AgentEditorListProps> = ({ agents, setAgents, ex
               <div className="text-2xl mr-3">{agent.icon}</div>
               <div className="flex-grow">
                 <h3 className={`font-semibold text-slate-800`}>{agent.name}</h3>
-                <p className="text-xs text-slate-500">{agent.description}</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-xs text-slate-500">{agent.description}</p>
+                  {status.status === 'success' && count > 0 && (
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                      <i className="fa-solid fa-comments"></i>
+                      <span>{count} comments</span>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="h-6 w-6 flex items-center justify-center mr-2">
                 {statusIndicator(status)}
@@ -84,16 +95,32 @@ const AgentEditorList: React.FC<AgentEditorListProps> = ({ agents, setAgents, ex
               </button>
             </div>
             {isEditing && (
-              <div className="p-4 border-t border-slate-200">
-                <label htmlFor={`prompt-${agentId}`} className="block text-sm font-medium text-slate-700 mb-2">
-                  Edit Prompt for {agent.name}
-                </label>
-                <textarea
-                  id={`prompt-${agentId}`}
-                  value={agent.prompt}
-                  onChange={(e) => handlePromptChange(agentId, e.target.value)}
-                  className="w-full h-48 bg-slate-50 border border-slate-300 rounded-md p-2 text-sm text-slate-800 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition font-mono"
-                />
+              <div className="p-4 border-t border-slate-200 space-y-4">
+                <div>
+                  <label htmlFor={`count-${agentId}`} className="block text-sm font-medium text-slate-700 mb-2">
+                    Target Comment Count
+                  </label>
+                  <input
+                    type="number"
+                    id={`count-${agentId}`}
+                    value={agent.targetCommentCount}
+                    onChange={(e) => handleCommentCountChange(agentId, parseInt(e.target.value, 10) || 0)}
+                    className="w-24 bg-slate-50 border border-slate-300 rounded-md p-2 text-sm text-slate-800 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition"
+                    min="1"
+                    max="50"
+                  />
+                </div>
+                <div>
+                  <label htmlFor={`prompt-${agentId}`} className="block text-sm font-medium text-slate-700 mb-2">
+                    Edit Prompt for {agent.name}
+                  </label>
+                  <textarea
+                    id={`prompt-${agentId}`}
+                    value={agent.prompt}
+                    onChange={(e) => handlePromptChange(agentId, e.target.value)}
+                    className="w-full h-48 bg-slate-50 border border-slate-300 rounded-md p-2 text-sm text-slate-800 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition font-mono"
+                  />
+                </div>
               </div>
             )}
           </div>
