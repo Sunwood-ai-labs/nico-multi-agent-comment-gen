@@ -6,6 +6,14 @@ import AgentEditorList from './components/AgentCard';
 import CommentView from './components/CommentView';
 import FileUploader from './components/FileUploader';
 
+const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+
 const App: React.FC = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [articleText, setArticleText] = useState<string>('');
@@ -97,8 +105,6 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setMergedComments([]);
-    setProgressMessage('Initializing...');
-    setProgressPercent(0);
     
     setAgentStatuses(
       Object.keys(agents).reduce((acc, key) => {
@@ -113,6 +119,32 @@ const App: React.FC = () => {
       }, {} as Record<AgentId, number>)
     );
 
+    setProgressMessage('Processing video file...');
+    setProgressPercent(5);
+
+    let videoBase64: string;
+    let videoMimeType: string;
+    try {
+      const dataUrl = await toBase64(videoFile);
+      const parts = dataUrl.split(',');
+      if (parts.length !== 2) {
+        throw new Error('Invalid Data URL format');
+      }
+      videoBase64 = parts[1];
+      videoMimeType = videoFile.type;
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      setError(`Failed to process video file. Details: ${errorMessage}`);
+      setIsLoading(false);
+      setProgressMessage('');
+      setProgressPercent(0);
+      return;
+    }
+
+    setProgressMessage('Initializing...');
+    const baseProgress = 10;
+    setProgressPercent(baseProgress);
+
     let accumulatedComments: Comment[] = [];
     
     let agentIndex = 0;
@@ -123,12 +155,13 @@ const App: React.FC = () => {
       
       try {
         const onRetry = (attempt: number, maxRetries: number) => {
-            setProgressMessage(`[${agentIndex + 1}/${executionOrder.length}] ${agent.name} hit a rate limit. Retrying (attempt ${attempt + 1}/${maxRetries})...`);
+            setProgressMessage(`[${agentIndex + 1}/${executionOrder.length}] ${agent.name} hit a rate limit. Retrying (attempt ${attempt}/${maxRetries})...`);
         };
         
         const newComments = await generateCommentsForAgent(
           agent,
           videoFile.name,
+          { mimeType: videoMimeType, data: videoBase64 },
           articleText,
           accumulatedComments,
           selectedModel,
@@ -145,7 +178,7 @@ const App: React.FC = () => {
         );
         
         setAgentStatuses(prev => ({ ...prev, [agentId]: { status: 'success' } }));
-        setProgressPercent(((agentIndex + 1) / executionOrder.length) * 100);
+        setProgressPercent(baseProgress + (((agentIndex + 1) / executionOrder.length) * (100 - baseProgress)));
 
       } catch (e) {
         console.error(`Error with ${agent.name}:`, e);
